@@ -1,0 +1,38 @@
+steps:
+  # 1. Build the container image
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      [
+        'build',
+        '-t',
+        'us-central1-docker.pkg.dev/$PROJECT_ID/itinerary-repo/itinerary-service:$SHORT_SHA',
+        '.'
+      ]
+
+  # 2. Push the image
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      [
+        'push',
+        'us-central1-docker.pkg.dev/$PROJECT_ID/itinerary-repo/itinerary-service:$SHORT_SHA'
+      ]
+
+  # 3. Deploy to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      [
+        'run',
+        'deploy',
+        'itinerary-service',
+        '--image',
+        'us-central1-docker.pkg.dev/$PROJECT_ID/itinerary-repo/itinerary-service:$SHORT_SHA',
+        '--region',
+        'us-central1',
+        '--platform',
+        'managed',
+        '--allow-unauthenticated'
+      ]
+
+images:
+  - 'us-central1-docker.pkg.dev/$PROJECT_ID/itinerary-repo/itinerary-service:$SHORT_SHA'
