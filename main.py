@@ -165,7 +165,12 @@ write_itinerary = Task(
 
 @app.route("/", methods=["GET"])
 def health_check():
-    return "🌟 Cloud Run service is up!", 200
+    project_id = os.getenv("GOOGLE_CLOUD_PROJECT", "default-project-id")
+    return jsonify({
+        "message": "🌟 Cloud Run service is up!",
+        "project_id": project_id
+    }), 200
+
 
 @app.route("/run", methods=["POST"])
 def generate_itinerary():
