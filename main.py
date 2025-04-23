@@ -1,4 +1,14 @@
 import os
+
+# *** ADD THESE LINES ***
+# 1) Point GOOGLE_APPLICATION_CREDENTIALS at the JSON ADC you mounted in Docker
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/secrets/sa-key.json"
+# 2) Make absolutely sure GOOGLE_CLOUD_PROJECT is set
+os.environ["GOOGLE_CLOUD_PROJECT"] = "cool-state-453106-d5"
+os.environ["CLOUDSDK_CORE_PROJECT"] = "cool-state-453106-d5"
+os.environ["LOCATION"] = "us-central1"
+# *********************************
+
 from flask import Flask, request, jsonify
 import vertexai
 from crewai import Agent, Task, Crew
@@ -7,13 +17,14 @@ from langchain_google_vertexai import ChatVertexAI
 app = Flask(__name__)
 
 # Initialize Vertex AI
-PROJECT_ID = os.getenv("GOOGLE_CLOUD_PROJECT", "default-project-id")
-LOCATION   = os.environ.get("LOCATION", "us-central1")
+PROJECT_ID = os.getenv("GOOGLE_CLOUD_PROJECT")
+LOCATION   = os.getenv("LOCATION")
 vertexai.init(project=PROJECT_ID, location=LOCATION)
 
 # Set up your LLM
 gemini_flash = ChatVertexAI(
     model_name="gemini-2.0-flash",
+    project=PROJECT_ID,
     project_id=PROJECT_ID,
     location=LOCATION
 )
