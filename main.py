@@ -7,7 +7,7 @@ from langchain_google_vertexai import ChatVertexAI
 app = Flask(__name__)
 
 # Initialize Vertex AI
-PROJECT_ID = os.environ["GOOGLE_CLOUD_PROJECT"]
+PROJECT_ID = os.getenv("GOOGLE_CLOUD_PROJECT", "default-project-id")
 LOCATION   = os.environ.get("LOCATION", "us-central1")
 vertexai.init(project=PROJECT_ID, location=LOCATION)
 
