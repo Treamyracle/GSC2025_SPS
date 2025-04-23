@@ -13,4 +13,8 @@ COPY . .
 
 # Use Gunicorn for production
 # Cloud Run provides $PORT automatically
-CMD ["gunicorn", "--bind", "0.0.0.0:$PORT", "main:app"]
+# expose supaya dokumentasi dan dev tools happy (opsional)
+EXPOSE 8080
+
+# Gunakan gunicorn untuk serve Flask app di main.py
+CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:8080", "main:app"]
