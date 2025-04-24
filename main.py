@@ -6,16 +6,18 @@ from langchain_google_vertexai import ChatVertexAI
 
 app = Flask(__name__)
 
-# Initialize Vertex AI
+# Cloud Run automatically sets GOOGLE_CLOUD_PROJECT to your project.
 PROJECT_ID = os.getenv("GOOGLE_CLOUD_PROJECT")
-LOCATION   = os.getenv("LOCATION")
-os.environ["CLOUDSDK_CORE_PROJECT"]   = PROJECT_ID
+# You can default LOCATION if you like:
+LOCATION   = os.getenv("LOCATION", "us-central1")
+
+# Initialize the Vertex AI SDK
 vertexai.init(project=PROJECT_ID, location=LOCATION)
 
-# Set up your LLM
+# Instantiate Gemini via LangChain/Vertex
 gemini_flash = ChatVertexAI(
     model_name="gemini-2.0-flash",
-    project=PROJECT_ID,
+    project=PROJECT_ID,      # <-- use 'project', not 'project_id'
     location=LOCATION
 )
 
