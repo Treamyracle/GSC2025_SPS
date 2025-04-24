@@ -1,3 +1,4 @@
+# main.py
 import os
 from flask import Flask, request, jsonify
 import vertexai
@@ -6,18 +7,18 @@ from langchain_google_vertexai import ChatVertexAI
 
 app = Flask(__name__)
 
-# Cloud Run automatically sets GOOGLE_CLOUD_PROJECT to your project.
+# Cloud Run otomatis meng-set GOOGLE_CLOUD_PROJECT ke project ID-mu
 PROJECT_ID = os.getenv("GOOGLE_CLOUD_PROJECT")
-# You can default LOCATION if you like:
+# Default LOCATION jika tidak di-set
 LOCATION   = os.getenv("LOCATION", "us-central1")
 
-# Initialize the Vertex AI SDK
+# Inisialisasi SDK Vertex AI
 vertexai.init(project=PROJECT_ID, location=LOCATION)
 
-# Instantiate Gemini via LangChain/Vertex
+# Instansiasi Gemini via LangChain/Vertex
 gemini_flash = ChatVertexAI(
     model_name="gemini-2.0-flash",
-    project=PROJECT_ID,      # <-- use 'project', not 'project_id'
+    project_id=PROJECT_ID,   # <-- gunakan project_id, bukan project
     location=LOCATION
 )
 
@@ -26,7 +27,7 @@ destination_researcher = Agent(
     role="Destination Researcher",
     goal=(
         "For each city in the planned route, "
-        "find the top 3–5 must‑see attractions, "
+        "find the top 3–5 must-see attractions, "
         "including name, brief description, "
         "and recommended visit duration."
     ),
@@ -40,7 +41,6 @@ destination_researcher = Agent(
     verbose=True,
     llm=gemini_flash,
 )
-
 
 input_agent = Agent(
     role="User Input Collector",
@@ -61,12 +61,12 @@ input_agent = Agent(
 
 route_planner = Agent(
     role="Route Planner",
-    goal="Sequence the user’s stops in a logical, one‑way path per country",
+    goal="Sequence the user’s stops in a logical, one-way path per country",
     backstory=(
         "Based on the list of cities in each country,\n"
-        "- Order them so travel is efficient (e.g. shortest‑path, no back‑tracking)\n"
+        "- Order them so travel is efficient (e.g. shortest-path, no back-tracking)\n"
         "- If multiple countries, decide border crossings (e.g. bus, train or flight)\n"
-        "- Suggest nearest airports for inter‑country flights or buses."
+        "- Suggest nearest airports for inter-country flights or buses."
     ),
     allow_delegation=False,
     verbose=True,
@@ -90,10 +90,10 @@ transport_agent = Agent(
 
 itinerary_writer = Agent(
     role="Itinerary Writer",
-    goal="Compose a day‑by‑day itinerary in Markdown",
+    goal="Compose a day-by-day itinerary in Markdown",
     backstory=(
         "Using the route and transport plans:\n"
-        "- Break into Day 1, Day 2, … up to total trip days\n"
+        "- Break into Day 1, Day 2, … up to total trip days\n"
         "- For each day, list activities in order with:\n"
         "    • Start/end times\n"
         "    • Location names\n"
@@ -113,11 +113,11 @@ plan_route = Task(
         "- Departure info: {departure}\n"
         "- Travelers: {travelers}\n\n"
         "1. For each country, list the key cities the user wants to visit.\n"
-        "2. Order them in a single‑direction route "
+        "2. Order them in a single-direction route "
         "(e.g. Geneva → Lausanne → Bern → Interlaken → Lucerne → Zurich).\n"
         "3. If multiple countries, decide border crossings (bus/train/flight) and nearest airports."
     ),
-    expected_output="An ordered list of stops per country, plus any inter‑country legs.",
+    expected_output="An ordered list of stops per country, plus any inter-country legs.",
     agent=route_planner,
     output_key="route",
 )
@@ -128,9 +128,9 @@ research_destinations = Task(
         "{route}\n\n"
         "For *each* city in that route, find the top 3–5 attractions:\n"
         "- Name\n"
-        "- 1‑sentence description\n"
+        "- 1-sentence description\n"
         "- Estimated visit time (e.g. 1h, 2h)\n\n"
-        "Return a JSON‑style list of dicts."
+        "Return a JSON-style list of dicts."
     ),
     expected_output="A list of {'city':…, 'attractions':[…]} entries.",
     agent=destination_researcher,
@@ -157,7 +157,7 @@ write_itinerary = Task(
         "- Route: {route}\n"
         "- Transport: {transport_segments}\n"
         "- Attractions: {attractions}\n\n"
-        "Produce a day‑by‑day Markdown itinerary:\n"
+        "Produce a day-by-day Markdown itinerary:\n"
         "• For each city: list attractions with their visit times.\n"
         "• For each travel leg: show departure/arrival times & mode."
     ),
@@ -173,7 +173,6 @@ def health_check():
         "message": "🌟 Cloud Run service is up!",
         "project_id": project_id
     }), 200
-
 
 @app.route("/run", methods=["POST"])
 def generate_itinerary():
