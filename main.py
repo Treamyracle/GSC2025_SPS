@@ -1,4 +1,3 @@
-# main.py
 import os
 from flask import Flask, request, jsonify
 import vertexai
@@ -7,18 +6,17 @@ from langchain_google_vertexai import ChatVertexAI
 
 app = Flask(__name__)
 
-# Cloud Run otomatis meng-set GOOGLE_CLOUD_PROJECT ke project ID-mu
+# Cloud Run will set GOOGLE_CLOUD_PROJECT and optionally LOCATION
 PROJECT_ID = os.getenv("GOOGLE_CLOUD_PROJECT")
-# Default LOCATION jika tidak di-set
-LOCATION   = os.getenv("LOCATION", "us-central1")
+LOCATION = os.getenv("LOCATION", "us-central1")
 
-# Inisialisasi SDK Vertex AI
+# Initialize the Vertex AI SDK using Application Default Credentials
 vertexai.init(project=PROJECT_ID, location=LOCATION)
 
-# Instansiasi Gemini via LangChain/Vertex
+# Instantiate Gemini LLM via LangChain/Vertex AI
 gemini_flash = ChatVertexAI(
     model_name="gemini-2.0-flash",
-    project_id=PROJECT_ID,   # <-- gunakan project_id, bukan project
+    project=PROJECT_ID,       # uses default credentials
     location=LOCATION
 )
 
@@ -168,21 +166,22 @@ write_itinerary = Task(
 
 @app.route("/", methods=["GET"])
 def health_check():
-    project_id = os.getenv("GOOGLE_CLOUD_PROJECT", "default-project-id")
     return jsonify({
         "message": "🌟 Cloud Run service is up!",
-        "project_id": project_id
+        "project_id": PROJECT_ID
     }), 200
 
 @app.route("/run", methods=["POST"])
 def generate_itinerary():
     inputs = request.get_json(force=True)
+
     # 1) Plan route
     route_crew = Crew(
         agents=[route_planner],
         tasks=[plan_route],
         manager_llm=gemini_flash,
-        project_id=PROJECT_ID, location=LOCATION
+        project_id=PROJECT_ID,
+        location=LOCATION
     )
     route_res = route_crew.kickoff(inputs=inputs).raw
 
@@ -191,7 +190,8 @@ def generate_itinerary():
         agents=[destination_researcher],
         tasks=[research_destinations],
         manager_llm=gemini_flash,
-        project_id=PROJECT_ID, location=LOCATION
+        project_id=PROJECT_ID,
+        location=LOCATION
     )
     attractions = dest_crew.kickoff(inputs={"route": route_res}).raw
 
@@ -200,7 +200,8 @@ def generate_itinerary():
         agents=[transport_agent],
         tasks=[plan_transport],
         manager_llm=gemini_flash,
-        project_id=PROJECT_ID, location=LOCATION
+        project_id=PROJECT_ID,
+        location=LOCATION
     )
     transport = trans_crew.kickoff(inputs={"route": route_res, **inputs}).raw
 
@@ -209,7 +210,8 @@ def generate_itinerary():
         agents=[itinerary_writer],
         tasks=[write_itinerary],
         manager_llm=gemini_flash,
-        project_id=PROJECT_ID, location=LOCATION
+        project_id=PROJECT_ID,
+        location=LOCATION
     )
     itinerary_md = write_crew.kickoff(inputs={
         "route": route_res,
