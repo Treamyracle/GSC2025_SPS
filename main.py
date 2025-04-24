@@ -16,7 +16,6 @@ vertexai.init(project=PROJECT_ID, location=LOCATION)
 gemini_flash = ChatVertexAI(
     model_name="gemini-2.0-flash",
     project=PROJECT_ID,
-    project_id=PROJECT_ID,
     location=LOCATION
 )
 
