@@ -1,14 +1,4 @@
 import os
-
-# *** ADD THESE LINES ***
-# 1) Point GOOGLE_APPLICATION_CREDENTIALS at the JSON ADC you mounted in Docker
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/secrets/sa-key.json"
-# 2) Make absolutely sure GOOGLE_CLOUD_PROJECT is set
-os.environ["GOOGLE_CLOUD_PROJECT"] = "cool-state-453106-d5"
-os.environ["CLOUDSDK_CORE_PROJECT"] = "cool-state-453106-d5"
-os.environ["LOCATION"] = "us-central1"
-# *********************************
-
 from flask import Flask, request, jsonify
 import vertexai
 from crewai import Agent, Task, Crew
