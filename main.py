@@ -9,6 +9,7 @@ app = Flask(__name__)
 # Initialize Vertex AI
 PROJECT_ID = os.getenv("GOOGLE_CLOUD_PROJECT")
 LOCATION   = os.getenv("LOCATION")
+os.environ["CLOUDSDK_CORE_PROJECT"]   = PROJECT_ID
 vertexai.init(project=PROJECT_ID, location=LOCATION)
 
 # Set up your LLM
