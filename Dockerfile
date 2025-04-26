@@ -1,7 +1,3 @@
-```
-
-### Dockerfile
-```dockerfile
 # Use official slim Python image
 FROM python:3.10-slim
 
