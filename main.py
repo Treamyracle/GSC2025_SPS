@@ -10,6 +10,20 @@ app = Flask(__name__)
 PROJECT_ID = os.getenv("GOOGLE_CLOUD_PROJECT")
 LOCATION = os.getenv("LOCATION", "us-central1")
 
+# Fallback for project ID if not set in environment
+if not PROJECT_ID:
+    # Try to get project ID from metadata server
+    try:
+        import requests
+        metadata_url = "http://metadata.google.internal/computeMetadata/v1/project/project-id"
+        headers = {"Metadata-Flavor": "Google"}
+        response = requests.get(metadata_url, headers=headers, timeout=1)
+        if response.status_code == 200:
+            PROJECT_ID = response.text
+    except:
+        # If all else fails, use a default project ID (replace with your actual project ID)
+        PROJECT_ID = "your-project-id"  # Replace with your actual project ID
+
 # Initialize the Vertex AI SDK using Application Default Credentials
 vertexai.init(project=PROJECT_ID, location=LOCATION)
 
@@ -49,7 +63,7 @@ input_agent = Agent(
         "- Arrival airport, date & time\n"
         "- Departure airport, date & time (if known)\n"
         "- Number of travelers, with ages for any under 18\n"
-        "- If they don’t yet have flights, only dates for departure & return\n"
+        "- If they don't yet have flights, only dates for departure & return\n"
         "Collect and validate this into a structured data format."
     ),
     allow_delegation=False,
@@ -59,7 +73,7 @@ input_agent = Agent(
 
 route_planner = Agent(
     role="Route Planner",
-    goal="Sequence the user’s stops in a logical, one-way path per country",
+    goal="Sequence the user's stops in a logical, one-way path per country",
     backstory=(
         "Based on the list of cities in each country,\n"
         "- Order them so travel is efficient (e.g. shortest-path, no back-tracking)\n"
@@ -141,7 +155,7 @@ plan_transport = Task(
         "{route}\n\n"
         "1. For each leg between stops, calculate distance & suggest mode "
         "(train, bus, flight).\n"
-        "2. Estimate departure & arrival times based on the user’s schedule.\n"
+        "2. Estimate departure & arrival times based on the user's schedule.\n"
         "3. If the user supplied real flights, slot them in."
     ),
     expected_output="A list of transport segments with mode, duration, and times.",

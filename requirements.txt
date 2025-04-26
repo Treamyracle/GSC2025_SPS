@@ -3,3 +3,4 @@ gunicorn
 google-cloud-aiplatform
 langchain-google-vertexai
 crewai
+requests
