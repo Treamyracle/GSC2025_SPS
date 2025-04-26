@@ -200,7 +200,7 @@ def generate_itinerary():
     print("PROJECT_ID:", os.getenv("PROJECT_ID"))
     print("CLOUDSDK_CORE_PROJECT:", os.getenv("CLOUDSDK_CORE_PROJECT"))
     print("project_id:", os.getenv("project_id"))
-    
+
     inputs = request.get_json(force=True)
 
     # 1) Plan route
@@ -213,6 +213,13 @@ def generate_itinerary():
     )
     route_res = route_crew.kickoff(inputs=inputs).raw
 
+    PROJECT_ID = (
+       os.getenv("GOOGLE_CLOUD_PROJECT") or
+       os.getenv("PROJECT_ID") or
+       os.getenv("CLOUDSDK_CORE_PROJECT") or
+       os.getenv("project_id")
+   )
+
     # 2) Research destinations
     dest_crew = Crew(
         agents=[destination_researcher],
@@ -223,6 +230,13 @@ def generate_itinerary():
     )
     attractions = dest_crew.kickoff(inputs={"route": route_res}).raw
 
+    PROJECT_ID = (
+       os.getenv("GOOGLE_CLOUD_PROJECT") or
+       os.getenv("PROJECT_ID") or
+       os.getenv("CLOUDSDK_CORE_PROJECT") or
+       os.getenv("project_id")
+   )
+
     # 3) Plan transport
     trans_crew = Crew(
         agents=[transport_agent],
@@ -232,6 +246,13 @@ def generate_itinerary():
         location=LOCATION
     )
     transport = trans_crew.kickoff(inputs={"route": route_res, **inputs}).raw
+
+    PROJECT_ID = (
+       os.getenv("GOOGLE_CLOUD_PROJECT") or
+       os.getenv("PROJECT_ID") or
+       os.getenv("CLOUDSDK_CORE_PROJECT") or
+       os.getenv("project_id")
+   )
 
     # 4) Write itinerary
     write_crew = Crew(
