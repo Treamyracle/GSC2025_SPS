@@ -29,7 +29,7 @@ if not PROJECT_ID:
             PROJECT_ID = response.text
     except:
         # If all else fails, use a default project ID (replace with your actual project ID)
-        PROJECT_ID = "your-project-id"  # Replace with your actual project ID
+        PROJECT_ID = "cool-state-453106-d5"  # Replace with your actual project ID
 
 # Initialize the Vertex AI SDK using Application Default Credentials
 vertexai.init(project=PROJECT_ID, location=LOCATION)
@@ -194,6 +194,13 @@ def health_check():
 
 @app.route("/run", methods=["POST"])
 def generate_itinerary():
+    import os
+
+    print("GOOGLE_CLOUD_PROJECT:", os.getenv("GOOGLE_CLOUD_PROJECT"))
+    print("PROJECT_ID:", os.getenv("PROJECT_ID"))
+    print("CLOUDSDK_CORE_PROJECT:", os.getenv("CLOUDSDK_CORE_PROJECT"))
+    print("project_id:", os.getenv("project_id"))
+    
     inputs = request.get_json(force=True)
 
     # 1) Plan route
