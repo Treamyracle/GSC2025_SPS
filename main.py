@@ -7,7 +7,14 @@ from langchain_google_vertexai import ChatVertexAI
 app = Flask(__name__)
 
 # Cloud Run will set GOOGLE_CLOUD_PROJECT and optionally LOCATION
-PROJECT_ID = os.getenv("GOOGLE_CLOUD_PROJECT")
+PROJECT_ID = (
+       os.getenv("GOOGLE_CLOUD_PROJECT") or
+       os.getenv("PROJECT_ID") or
+       os.getenv("CLOUDSDK_CORE_PROJECT") or
+       os.getenv("project_id")
+   )
+
+print("PROJECT_ID:", PROJECT_ID)
 LOCATION = os.getenv("LOCATION", "us-central1")
 
 # Fallback for project ID if not set in environment
