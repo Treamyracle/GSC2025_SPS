@@ -4,9 +4,9 @@ import vertexai
 from crewai import Agent, Task, Crew
 from langchain_google_vertexai import ChatVertexAI
 import litellm
-
-# Aktifkan debug mode untuk LiteLLM
-litellm._turn_on_debug()
+import google.auth
+from google.auth import credentials
+from google.auth.transport.requests import Request
 
 app = Flask(__name__)
 
@@ -43,20 +43,47 @@ except:
 # Set environment variable untuk memastikan library lain bisa mengaksesnya
 os.environ["PROJECT_ID"] = PROJECT_ID
 os.environ["GOOGLE_CLOUD_PROJECT"] = PROJECT_ID
+os.environ["VERTEX_PROJECT"] = PROJECT_ID
+os.environ["VERTEX_LOCATION"] = LOCATION
+os.environ["LITELLM_PROJECT_ID"] = PROJECT_ID
+os.environ["LITELLM_LOCATION"] = LOCATION
 
 # Konfigurasi LiteLLM
 litellm.set_verbose = True
-litellm.project_id = PROJECT_ID
-litellm.location = LOCATION
 
 # Initialize the Vertex AI SDK using Application Default Credentials
 vertexai.init(project=PROJECT_ID, location=LOCATION)
 
+# Refresh credentials jika diperlukan
+try:
+    creds, project = google.auth.default()
+    if creds.expired:
+        creds.refresh(Request())
+    print("Credentials refreshed successfully")
+except Exception as e:
+    print(f"Error refreshing credentials: {e}")
+
 def create_gemini_llm():
     """Create a new instance of ChatVertexAI with current project settings"""
+    # Pastikan environment variables tersedia untuk setiap instance
+    os.environ["PROJECT_ID"] = PROJECT_ID
+    os.environ["GOOGLE_CLOUD_PROJECT"] = PROJECT_ID
+    os.environ["VERTEX_PROJECT"] = PROJECT_ID
+    os.environ["VERTEX_LOCATION"] = LOCATION
+    os.environ["LITELLM_PROJECT_ID"] = PROJECT_ID
+    os.environ["LITELLM_LOCATION"] = LOCATION
+    
+    # Refresh credentials untuk setiap instance
+    try:
+        creds, project = google.auth.default()
+        if creds.expired:
+            creds.refresh(Request())
+    except Exception as e:
+        print(f"Error refreshing credentials in create_gemini_llm: {e}")
+    
     return ChatVertexAI(
         model_name="gemini-2.0-flash",
-        project=os.environ.get("PROJECT_ID", PROJECT_ID),
+        project=PROJECT_ID,
         location=LOCATION
     )
 
