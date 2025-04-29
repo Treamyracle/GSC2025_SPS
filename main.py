@@ -151,66 +151,71 @@ def get_itinerary_writer():
         llm=create_gemini_llm(),
     )
 
-plan_route = Task(
-    description=(
-        "Given the trip parameters:\n"
-        "- Countries to visit: {countries}\n"
-        "- Arrival info: {arrival}\n"
-        "- Departure info: {departure}\n"
-        "- Travelers: {travelers}\n\n"
-        "1. For each country, list the key cities the user wants to visit.\n"
-        "2. Order them in a single-direction route "
-        "(e.g. Geneva → Lausanne → Bern → Interlaken → Lucerne → Zurich).\n"
-        "3. If multiple countries, decide border crossings (bus/train/flight) and nearest airports."
-    ),
-    expected_output="An ordered list of stops per country, plus any inter-country legs.",
-    agent=route_planner,
-    output_key="route",
-)
+# Define tasks with functions instead of direct agent references
+def get_plan_route_task():
+    return Task(
+        description=(
+            "Given the trip parameters:\n"
+            "- Countries to visit: {countries}\n"
+            "- Arrival info: {arrival}\n"
+            "- Departure info: {departure}\n"
+            "- Travelers: {travelers}\n\n"
+            "1. For each country, list the key cities the user wants to visit.\n"
+            "2. Order them in a single-direction route "
+            "(e.g. Geneva → Lausanne → Bern → Interlaken → Lucerne → Zurich).\n"
+            "3. If multiple countries, decide border crossings (bus/train/flight) and nearest airports."
+        ),
+        expected_output="An ordered list of stops per country, plus any inter-country legs.",
+        agent=get_route_planner(),
+        output_key="route",
+    )
 
-research_destinations = Task(
-    description=(
-        "Here is the planned route:\n"
-        "{route}\n\n"
-        "For *each* city in that route, find the top 3–5 attractions:\n"
-        "- Name\n"
-        "- 1-sentence description\n"
-        "- Estimated visit time (e.g. 1h, 2h)\n\n"
-        "Return a JSON-style list of dicts."
-    ),
-    expected_output="A list of {'city':…, 'attractions':[…]} entries.",
-    agent=destination_researcher,
-    output_key="attractions",
-)
+def get_research_destinations_task():
+    return Task(
+        description=(
+            "Here is the planned route:\n"
+            "{route}\n\n"
+            "For *each* city in that route, find the top 3–5 attractions:\n"
+            "- Name\n"
+            "- 1-sentence description\n"
+            "- Estimated visit time (e.g. 1h, 2h)\n\n"
+            "Return a JSON-style list of dicts."
+        ),
+        expected_output="A list of {'city':…, 'attractions':[…]} entries.",
+        agent=get_destination_researcher(),
+        output_key="attractions",
+    )
 
-plan_transport = Task(
-    description=(
-        "Given the route:\n"
-        "{route}\n\n"
-        "1. For each leg between stops, calculate distance & suggest mode "
-        "(train, bus, flight).\n"
-        "2. Estimate departure & arrival times based on the user's schedule.\n"
-        "3. If the user supplied real flights, slot them in."
-    ),
-    expected_output="A list of transport segments with mode, duration, and times.",
-    agent=transport_agent,
-    output_key="transport_segments",
-)
+def get_plan_transport_task():
+    return Task(
+        description=(
+            "Given the route:\n"
+            "{route}\n\n"
+            "1. For each leg between stops, calculate distance & suggest mode "
+            "(train, bus, flight).\n"
+            "2. Estimate departure & arrival times based on the user's schedule.\n"
+            "3. If the user supplied real flights, slot them in."
+        ),
+        expected_output="A list of transport segments with mode, duration, and times.",
+        agent=get_transport_agent(),
+        output_key="transport_segments",
+    )
 
-write_itinerary = Task(
-    description=(
-        "Using the following data:\n"
-        "- Route: {route}\n"
-        "- Transport: {transport_segments}\n"
-        "- Attractions: {attractions}\n\n"
-        "Produce a day-by-day Markdown itinerary:\n"
-        "• For each city: list attractions with their visit times.\n"
-        "• For each travel leg: show departure/arrival times & mode."
-    ),
-    expected_output="A full Markdown itinerary incorporating attractions and travel details.",
-    agent=itinerary_writer,
-    output_key="itinerary_md",
-)
+def get_write_itinerary_task():
+    return Task(
+        description=(
+            "Using the following data:\n"
+            "- Route: {route}\n"
+            "- Transport: {transport_segments}\n"
+            "- Attractions: {attractions}\n\n"
+            "Produce a day-by-day Markdown itinerary:\n"
+            "• For each city: list attractions with their visit times.\n"
+            "• For each travel leg: show departure/arrival times & mode."
+        ),
+        expected_output="A full Markdown itinerary incorporating attractions and travel details.",
+        agent=get_itinerary_writer(),
+        output_key="itinerary_md",
+    )
 
 @app.route("/", methods=["GET"])
 def health_check():
@@ -237,9 +242,10 @@ def generate_itinerary():
     try:
         # 1) Plan route dengan agent yang baru
         route_planner = get_route_planner()
+        plan_route_task = get_plan_route_task()
         route_crew = Crew(
             agents=[route_planner],
-            tasks=[plan_route],
+            tasks=[plan_route_task],
             manager_llm=create_gemini_llm(),
             project_id=current_project_id,
             location=LOCATION
@@ -249,9 +255,10 @@ def generate_itinerary():
 
         # 2) Research destinations dengan agent yang baru
         destination_researcher = get_destination_researcher()
+        research_destinations_task = get_research_destinations_task()
         dest_crew = Crew(
             agents=[destination_researcher],
-            tasks=[research_destinations],
+            tasks=[research_destinations_task],
             manager_llm=create_gemini_llm(),
             project_id=current_project_id,
             location=LOCATION
@@ -261,9 +268,10 @@ def generate_itinerary():
 
         # 3) Plan transport dengan agent yang baru
         transport_agent = get_transport_agent()
+        plan_transport_task = get_plan_transport_task()
         trans_crew = Crew(
             agents=[transport_agent],
-            tasks=[plan_transport],
+            tasks=[plan_transport_task],
             manager_llm=create_gemini_llm(),
             project_id=current_project_id,
             location=LOCATION
@@ -273,9 +281,10 @@ def generate_itinerary():
 
         # 4) Write itinerary dengan agent yang baru
         itinerary_writer = get_itinerary_writer()
+        write_itinerary_task = get_write_itinerary_task()
         write_crew = Crew(
             agents=[itinerary_writer],
-            tasks=[write_itinerary],
+            tasks=[write_itinerary_task],
             manager_llm=create_gemini_llm(),
             project_id=current_project_id,
             location=LOCATION
