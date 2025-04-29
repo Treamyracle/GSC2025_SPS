@@ -6,30 +6,35 @@ from langchain_google_vertexai import ChatVertexAI
 
 app = Flask(__name__)
 
-# Cloud Run will set GOOGLE_CLOUD_PROJECT and optionally LOCATION
-PROJECT_ID = (
-       os.getenv("GOOGLE_CLOUD_PROJECT") or
-       os.getenv("PROJECT_ID") or
-       os.getenv("CLOUDSDK_CORE_PROJECT") or
-       os.getenv("project_id")
-   )
-
-print("PROJECT_ID:", PROJECT_ID)
+# Inisialisasi PROJECT_ID dengan nilai default
+PROJECT_ID = "cool-state-453106-d5"  # Default value
 LOCATION = os.getenv("LOCATION", "us-central1")
 
-# Fallback for project ID if not set in environment
-if not PROJECT_ID:
-    # Try to get project ID from metadata server
-    try:
-        import requests
-        metadata_url = "http://metadata.google.internal/computeMetadata/v1/project/project-id"
-        headers = {"Metadata-Flavor": "Google"}
-        response = requests.get(metadata_url, headers=headers, timeout=1)
-        if response.status_code == 200:
-            PROJECT_ID = response.text
-    except:
-        # If all else fails, use a default project ID (replace with your actual project ID)
-        PROJECT_ID = "cool-state-453106-d5"  # Replace with your actual project ID
+# Coba ambil dari environment variable jika ada
+env_project_id = (
+    os.getenv("GOOGLE_CLOUD_PROJECT") or
+    os.getenv("PROJECT_ID") or
+    os.getenv("CLOUDSDK_CORE_PROJECT") or
+    os.getenv("project_id")
+)
+
+if env_project_id:
+    PROJECT_ID = env_project_id
+    print("Using PROJECT_ID from environment:", PROJECT_ID)
+else:
+    print("Using default PROJECT_ID:", PROJECT_ID)
+
+# Coba ambil dari metadata server jika di Cloud Run
+try:
+    import requests
+    metadata_url = "http://metadata.google.internal/computeMetadata/v1/project/project-id"
+    headers = {"Metadata-Flavor": "Google"}
+    response = requests.get(metadata_url, headers=headers, timeout=1)
+    if response.status_code == 200:
+        PROJECT_ID = response.text
+        print("Using PROJECT_ID from metadata server:", PROJECT_ID)
+except:
+    print("Could not get PROJECT_ID from metadata server, using:", PROJECT_ID)
 
 # Initialize the Vertex AI SDK using Application Default Credentials
 vertexai.init(project=PROJECT_ID, location=LOCATION)
@@ -200,8 +205,15 @@ def generate_itinerary():
     print("PROJECT_ID:", os.getenv("PROJECT_ID"))
     print("CLOUDSDK_CORE_PROJECT:", os.getenv("CLOUDSDK_CORE_PROJECT"))
     print("project_id:", os.getenv("project_id"))
+    print("Final PROJECT_ID used:", PROJECT_ID)
 
     inputs = request.get_json(force=True)
+
+    # Pastikan PROJECT_ID selalu tersedia
+    global PROJECT_ID
+    if not PROJECT_ID:
+        PROJECT_ID = "cool-state-453106-d5"  # Fallback ke hardcoded value jika tidak ada
+        print("Using fallback PROJECT_ID:", PROJECT_ID)
 
     # 1) Plan route
     route_crew = Crew(
@@ -213,12 +225,10 @@ def generate_itinerary():
     )
     route_res = route_crew.kickoff(inputs=inputs).raw
 
-    PROJECT_ID = (
-       os.getenv("GOOGLE_CLOUD_PROJECT") or
-       os.getenv("PROJECT_ID") or
-       os.getenv("CLOUDSDK_CORE_PROJECT") or
-       os.getenv("project_id")
-   )
+    # Pastikan PROJECT_ID masih tersedia setelah kickoff pertama
+    if not PROJECT_ID:
+        PROJECT_ID = "cool-state-453106-d5"
+        print("Reinitializing PROJECT_ID after first kickoff:", PROJECT_ID)
 
     # 2) Research destinations
     dest_crew = Crew(
@@ -230,12 +240,10 @@ def generate_itinerary():
     )
     attractions = dest_crew.kickoff(inputs={"route": route_res}).raw
 
-    PROJECT_ID = (
-       os.getenv("GOOGLE_CLOUD_PROJECT") or
-       os.getenv("PROJECT_ID") or
-       os.getenv("CLOUDSDK_CORE_PROJECT") or
-       os.getenv("project_id")
-   )
+    # Pastikan PROJECT_ID masih tersedia setelah kickoff kedua
+    if not PROJECT_ID:
+        PROJECT_ID = "cool-state-453106-d5"
+        print("Reinitializing PROJECT_ID after second kickoff:", PROJECT_ID)
 
     # 3) Plan transport
     trans_crew = Crew(
@@ -247,12 +255,10 @@ def generate_itinerary():
     )
     transport = trans_crew.kickoff(inputs={"route": route_res, **inputs}).raw
 
-    PROJECT_ID = (
-       os.getenv("GOOGLE_CLOUD_PROJECT") or
-       os.getenv("PROJECT_ID") or
-       os.getenv("CLOUDSDK_CORE_PROJECT") or
-       os.getenv("project_id")
-   )
+    # Pastikan PROJECT_ID masih tersedia setelah kickoff ketiga
+    if not PROJECT_ID:
+        PROJECT_ID = "cool-state-453106-d5"
+        print("Reinitializing PROJECT_ID after third kickoff:", PROJECT_ID)
 
     # 4) Write itinerary
     write_crew = Crew(
