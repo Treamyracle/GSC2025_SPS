@@ -44,6 +44,11 @@ except:
 os.environ["PROJECT_ID"] = PROJECT_ID
 os.environ["GOOGLE_CLOUD_PROJECT"] = PROJECT_ID
 
+# Konfigurasi LiteLLM
+litellm.set_verbose = True
+litellm.project_id = PROJECT_ID
+litellm.location = LOCATION
+
 # Initialize the Vertex AI SDK using Application Default Credentials
 vertexai.init(project=PROJECT_ID, location=LOCATION)
 
