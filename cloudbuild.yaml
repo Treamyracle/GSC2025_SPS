@@ -33,7 +33,6 @@ steps:
         'managed',
         '--allow-unauthenticated',
         '--set-env-vars',
-        'GOOGLE_CLOUD_PROJECT=$PROJECT_ID,LOCATION=us-central1'
       ]
 
 images:

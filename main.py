@@ -36,6 +36,10 @@ try:
 except:
     print("Could not get PROJECT_ID from metadata server, using:", PROJECT_ID)
 
+# Set environment variable untuk memastikan library lain bisa mengaksesnya
+os.environ["PROJECT_ID"] = PROJECT_ID
+os.environ["GOOGLE_CLOUD_PROJECT"] = PROJECT_ID
+
 # Initialize the Vertex AI SDK using Application Default Credentials
 vertexai.init(project=PROJECT_ID, location=LOCATION)
 
@@ -210,62 +214,66 @@ def generate_itinerary():
     inputs = request.get_json(force=True)
 
     # Pastikan PROJECT_ID selalu tersedia
-    global PROJECT_ID
-    if not PROJECT_ID:
-        PROJECT_ID = "cool-state-453106-d5"  # Fallback ke hardcoded value jika tidak ada
-        print("Using fallback PROJECT_ID:", PROJECT_ID)
+    current_project_id = PROJECT_ID  # Gunakan variabel lokal
+    if not current_project_id:
+        current_project_id = "cool-state-453106-d5"  # Fallback ke hardcoded value jika tidak ada
+        print("Using fallback PROJECT_ID:", current_project_id)
+        os.environ["PROJECT_ID"] = current_project_id  # Update environment variable
 
     # 1) Plan route
     route_crew = Crew(
         agents=[route_planner],
         tasks=[plan_route],
         manager_llm=gemini_flash,
-        project_id=PROJECT_ID,
+        project_id=current_project_id,
         location=LOCATION
     )
     route_res = route_crew.kickoff(inputs=inputs).raw
 
     # Pastikan PROJECT_ID masih tersedia setelah kickoff pertama
-    if not PROJECT_ID:
-        PROJECT_ID = "cool-state-453106-d5"
-        print("Reinitializing PROJECT_ID after first kickoff:", PROJECT_ID)
+    if not current_project_id:
+        current_project_id = "cool-state-453106-d5"
+        print("Reinitializing PROJECT_ID after first kickoff:", current_project_id)
+        os.environ["PROJECT_ID"] = current_project_id  # Update environment variable
 
     # 2) Research destinations
     dest_crew = Crew(
         agents=[destination_researcher],
         tasks=[research_destinations],
         manager_llm=gemini_flash,
-        project_id=PROJECT_ID,
+        project_id=current_project_id,
         location=LOCATION
     )
     attractions = dest_crew.kickoff(inputs={"route": route_res}).raw
 
     # Pastikan PROJECT_ID masih tersedia setelah kickoff kedua
-    if not PROJECT_ID:
-        PROJECT_ID = "cool-state-453106-d5"
-        print("Reinitializing PROJECT_ID after second kickoff:", PROJECT_ID)
+    if not current_project_id:
+        current_project_id = "cool-state-453106-d5"
+        print("Reinitializing PROJECT_ID after second kickoff:", current_project_id)
+        os.environ["PROJECT_ID"] = current_project_id  # Update environment variable
 
     # 3) Plan transport
     trans_crew = Crew(
         agents=[transport_agent],
         tasks=[plan_transport],
         manager_llm=gemini_flash,
-        project_id=PROJECT_ID,
+        project_id=current_project_id,
         location=LOCATION
     )
     transport = trans_crew.kickoff(inputs={"route": route_res, **inputs}).raw
 
     # Pastikan PROJECT_ID masih tersedia setelah kickoff ketiga
-    if not PROJECT_ID:
-        PROJECT_ID = "cool-state-453106-d5"
-        print("Reinitializing PROJECT_ID after third kickoff:", PROJECT_ID)
+    if not current_project_id:
+        current_project_id = "cool-state-453106-d5"
+        print("Reinitializing PROJECT_ID after third kickoff:", current_project_id)
+        os.environ["PROJECT_ID"] = current_project_id  # Update environment variable
 
     # 4) Write itinerary
     write_crew = Crew(
         agents=[itinerary_writer],
         tasks=[write_itinerary],
         manager_llm=gemini_flash,
-        project_id=PROJECT_ID,
+        project_id=current_project_id,
         location=LOCATION
     )
     itinerary_md = write_crew.kickoff(inputs={
