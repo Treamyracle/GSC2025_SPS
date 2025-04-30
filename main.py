@@ -351,11 +351,49 @@ def generate_itinerary():
         }).raw
         print("Itinerary writing completed successfully")
 
+        # 5) Ekstrak informasi kota dan tanggal
+        itinerary_data = []
+        current_city = None
+        current_checkin = None
+        current_checkout = None
+
+        # Parse markdown untuk mendapatkan informasi
+        lines = itinerary_md.split('\n')
+        for line in lines:
+            # Cari baris yang mengandung informasi kota
+            if '**' in line and '**' in line[line.find('**')+2:]:
+                city = line[line.find('**')+2:line.find('**', line.find('**')+2)]
+                if city and city != current_city:
+                    if current_city and current_checkin and current_checkout:
+                        itinerary_data.append({
+                            "city": current_city,
+                            "checkin": current_checkin,
+                            "checkout": current_checkout
+                        })
+                    current_city = city
+                    current_checkin = None
+                    current_checkout = None
+            
+            # Cari baris yang mengandung tanggal
+            if 'Check-in:' in line:
+                current_checkin = line.split('Check-in:')[1].strip()
+            if 'Check-out:' in line:
+                current_checkout = line.split('Check-out:')[1].strip()
+
+        # Tambahkan kota terakhir jika ada
+        if current_city and current_checkin and current_checkout:
+            itinerary_data.append({
+                "city": current_city,
+                "checkin": current_checkin,
+                "checkout": current_checkout
+            })
+
         return jsonify({
             "route": route_res,
             "attractions": attractions,
             "transport": transport,
-            "itinerary_markdown": itinerary_md
+            "itinerary_markdown": itinerary_md,
+            "itinerary_data": itinerary_data
         })
     except Exception as e:
         print(f"Error occurred: {str(e)}")
