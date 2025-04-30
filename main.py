@@ -7,6 +7,7 @@ import litellm
 import google.auth
 from google.auth import credentials
 from google.auth.transport.requests import Request
+import json
 
 app = Flask(__name__)
 
@@ -54,14 +55,25 @@ litellm.set_verbose = True
 # Initialize the Vertex AI SDK using Application Default Credentials
 vertexai.init(project=PROJECT_ID, location=LOCATION)
 
-# Refresh credentials jika diperlukan
+# Dapatkan credentials dan project_id
 try:
     creds, project = google.auth.default()
     if creds.expired:
         creds.refresh(Request())
     print("Credentials refreshed successfully")
+    
+    # Set credentials untuk LiteLLM
+    litellm.vertex_credentials = creds
+    litellm.vertex_project = project or PROJECT_ID
+    litellm.vertex_location = LOCATION
+    
+    # Set environment variables tambahan
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = json.dumps(creds.to_json())
+    os.environ["VERTEX_CREDENTIALS"] = json.dumps(creds.to_json())
+    
+    print("LiteLLM configured with project_id:", litellm.vertex_project)
 except Exception as e:
-    print(f"Error refreshing credentials: {e}")
+    print(f"Error setting up credentials: {e}")
 
 def create_gemini_llm():
     """Create a new instance of ChatVertexAI with current project settings"""
@@ -78,6 +90,17 @@ def create_gemini_llm():
         creds, project = google.auth.default()
         if creds.expired:
             creds.refresh(Request())
+        
+        # Set credentials untuk LiteLLM
+        litellm.vertex_credentials = creds
+        litellm.vertex_project = project or PROJECT_ID
+        litellm.vertex_location = LOCATION
+        
+        # Set environment variables tambahan
+        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = json.dumps(creds.to_json())
+        os.environ["VERTEX_CREDENTIALS"] = json.dumps(creds.to_json())
+        
+        print("LiteLLM instance configured with project_id:", litellm.vertex_project)
     except Exception as e:
         print(f"Error refreshing credentials in create_gemini_llm: {e}")
     
