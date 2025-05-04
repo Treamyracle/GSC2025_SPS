@@ -206,6 +206,20 @@ def get_itinerary_writer():
         llm=create_gemini_llm(),
     )
 
+def get_itinerary_parser():
+    return Agent(
+        role="Itinerary Parser",
+        goal="Extract and structure itinerary data from markdown and route information",
+        backstory=(
+            "You are an expert at parsing travel itineraries and extracting structured data. "
+            "You can identify cities, dates, and activities from various formats and present them "
+            "in a clean, organized JSON structure."
+        ),
+        allow_delegation=False,
+        verbose=True,
+        llm=create_gemini_llm(),
+    )
+
 # Define tasks with functions instead of direct agent references
 def get_plan_route_task():
     return Task(
@@ -270,6 +284,28 @@ def get_write_itinerary_task():
         expected_output="A full Markdown itinerary incorporating attractions and travel details.",
         agent=get_itinerary_writer(),
         output_key="itinerary_md",
+    )
+
+def get_parse_itinerary_task():
+    return Task(
+        description=(
+            "Given the following data:\n"
+            "- Route: {route}\n"
+            "- Itinerary Markdown: {itinerary_md}\n"
+            "- Attractions: {attractions}\n\n"
+            "Extract and structure the following information:\n"
+            "1. For each city in the itinerary:\n"
+            "   - City name\n"
+            "   - Check-in date\n"
+            "   - Check-out date\n"
+            "   - List of attractions with their durations\n"
+            "2. Format the output as a JSON array of city objects\n"
+            "3. Ensure dates are properly formatted\n"
+            "4. Include all attractions from the attractions list for each city"
+        ),
+        expected_output="A structured JSON array containing detailed city information",
+        agent=get_itinerary_parser(),
+        output_key="parsed_itinerary",
     )
 
 @app.route("/", methods=["GET"])
@@ -351,80 +387,28 @@ def generate_itinerary():
         }).raw
         print("Itinerary writing completed successfully")
 
-        # 5) Ekstrak informasi kota dan tanggal
-        itinerary_data = []
-        current_city = None
-        current_checkin = None
-        current_checkout = None
-
-        # Parse markdown untuk mendapatkan informasi
-        lines = itinerary_md.split('\n')
-        for i, line in enumerate(lines):
-            # Cari baris yang mengandung informasi kota
-            if '**Day' in line and ':' in line:
-                # Cari kota di baris berikutnya
-                if i + 1 < len(lines):
-                    next_line = lines[i + 1]
-                    if '**' in next_line:
-                        city = next_line[next_line.find('**')+2:next_line.find('**', next_line.find('**')+2)]
-                        if city and city != current_city:
-                            if current_city and current_checkin and current_checkout:
-                                itinerary_data.append({
-                                    "city": current_city,
-                                    "checkin": current_checkin,
-                                    "checkout": current_checkout
-                                })
-                            current_city = city
-                            current_checkin = None
-                            current_checkout = None
-            
-            # Cari baris yang mengandung tanggal
-            if 'Arrival in' in line or 'Explore' in line:
-                # Cari tanggal di baris sebelumnya
-                if i > 0:
-                    prev_line = lines[i - 1]
-                    if '**Day' in prev_line and ':' in prev_line:
-                        date_part = prev_line.split(':')[0].strip()
-                        if '**Day' in date_part:
-                            date = date_part.split('**Day')[1].strip()
-                            if ' - ' in date:
-                                dates = date.split(' - ')
-                                if len(dates) == 2:
-                                    current_checkin = dates[0].strip()
-                                    current_checkout = dates[1].strip()
-
-        # Tambahkan kota terakhir jika ada
-        if current_city and current_checkin and current_checkout:
-            itinerary_data.append({
-                "city": current_city,
-                "checkin": current_checkin,
-                "checkout": current_checkout
-            })
-
-        # Jika masih kosong, coba ekstrak dari route
-        if not itinerary_data and route_res:
-            route_lines = route_res.split('\n')
-            for line in route_lines:
-                if '**' in line and '(' in line and ')' in line:
-                    city = line[line.find('**')+2:line.find('**', line.find('**')+2)]
-                    date_part = line[line.find('(')+1:line.find(')')]
-                    if ' - ' in date_part:
-                        dates = date_part.split(' - ')
-                        if len(dates) == 2:
-                            itinerary_data.append({
-                                "city": city,
-                                "checkin": dates[0].strip(),
-                                "checkout": dates[1].strip()
-                            })
-
-        print("Extracted itinerary data:", itinerary_data)
+        # Add itinerary parsing step
+        itinerary_parser = get_itinerary_parser()
+        parse_itinerary_task = get_parse_itinerary_task()
+        parse_crew = Crew(
+            agents=[itinerary_parser],
+            tasks=[parse_itinerary_task],
+            manager_llm=create_gemini_llm(),
+            project_id=current_project_id,
+            location=LOCATION
+        )
+        parsed_itinerary = parse_crew.kickoff(inputs={
+            "route": route_res,
+            "itinerary_md": itinerary_md,
+            "attractions": attractions
+        }).raw
 
         return jsonify({
             "route": route_res,
             "attractions": attractions,
             "transport": transport,
             "itinerary_markdown": itinerary_md,
-            "itinerary_data": itinerary_data
+            "itinerary_data": parsed_itinerary
         })
     except Exception as e:
         print(f"Error occurred: {str(e)}")
