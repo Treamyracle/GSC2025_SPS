@@ -291,19 +291,22 @@ def get_parse_itinerary_task():
         description=(
             "Given the following data:\n"
             "- Route: {route}\n"
-            "- Itinerary Markdown: {itinerary_md}\n"
-            "- Attractions: {attractions}\n\n"
+            "- Itinerary Markdown: {itinerary_md}\n\n"
             "Extract and structure the following information:\n"
             "1. For each city in the itinerary:\n"
-            "   - City name\n"
-            "   - Check-in date\n"
-            "   - Check-out date\n"
-            "   - List of attractions with their durations\n"
-            "2. Format the output as a JSON array of city objects\n"
-            "3. Ensure dates are properly formatted\n"
-            "4. Include all attractions from the attractions list for each city"
+            "   - City name (extract only the city name, remove any additional text like dates)\n"
+            "   - Check-in date (format: Month Day, e.g., 'July 1')\n"
+            "   - Check-out date (format: Month Day, e.g., 'July 2')\n"
+            "2. Format the output as a simple JSON array of objects with these fields:\n"
+            "   {\n"
+            "     \"city\": \"city name\",\n"
+            "     \"checkin\": \"check-in date\",\n"
+            "     \"checkout\": \"check-out date\"\n"
+            "   }\n"
+            "3. Skip any entries that are not actual cities (like 'Border Crossing' or country names)\n"
+            "4. Ensure dates are properly formatted and consistent"
         ),
-        expected_output="A structured JSON array containing detailed city information",
+        expected_output="A simple JSON array containing city and date information",
         agent=get_itinerary_parser(),
         output_key="parsed_itinerary",
     )
