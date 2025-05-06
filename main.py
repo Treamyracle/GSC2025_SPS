@@ -436,6 +436,7 @@ def generate_itinerary():
             "transport": transport,
             "itinerary_markdown": itinerary_md,
             "itinerary_data": parsed_to_json,
+            "pre_parsed": parsed_itinerary
             
         })
     except Exception as e:
