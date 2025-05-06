@@ -298,18 +298,27 @@ def get_parse_itinerary_task():
             "Extract and structure the following information:\n"
             "1. For each city in the itinerary:\n"
             "   - City name (extract only the city name, remove any additional text like dates)\n"
-            "   - Check-in date (format: Month Day, e.g., 'July 1')\n"
-            "   - Check-out date (format: Month Day, e.g., 'July 2')\n"
-            "2. Format the output as a simple JSON array of objects with these fields:\n"
-            "   {\n"
-            "     \"city\": \"city name\",\n"
-            "     \"checkin\": \"check-in date\",\n"
-            "     \"checkout\": \"check-out date\"\n"
-            "   }\n"
-            "3. Skip any entries that are not actual cities (like 'Border Crossing' or country names)\n"
-            "4. Ensure dates are properly formatted and consistent"
+            "   - Check-in date (format: MM/DD, e.g., '07/01' for July 1)\n"
+            "   - Check-out date (format: MM/DD, e.g., '07/02' for July 2)\n"
+            "2. Format the output as a JSON array of objects with the following structure:\n"
+            "[\n"
+            "  {\n"
+            "    \"city\": \"city name\",\n"
+            "    \"checkin\": \"MM/DD\",\n"
+            "    \"checkout\": \"MM/DD\"\n"
+            "  },\n"
+            "  ...\n"
+            "]\n"
+            "3. Skip any entries that are not actual cities (such as 'Border Crossing' or country names)\n"
+            "4. Ensure dates are properly formatted and consistent in MM/DD format\n\n"
+            "Example expected output:\n"
+            "[\n"
+            "  {\"city\": \"Bangkok\", \"checkin\": \"07/01\", \"checkout\": \"07/03\"},\n"
+            "  {\"city\": \"Chiang Mai\", \"checkin\": \"07/03\", \"checkout\": \"07/06\"},\n"
+            "  {\"city\": \"Luang Prabang\", \"checkin\": \"07/06\", \"checkout\": \"07/08\"}\n"
+            "]"
         ),
-        expected_output="A simple JSON array containing city and date information",
+        expected_output="A JSON array containing city and date information with MM/DD date format",
         agent=get_itinerary_parser(),
         output_key="itinerary_data",
     )
