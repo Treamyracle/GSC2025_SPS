@@ -223,24 +223,6 @@ def get_itinerary_parser():
 import json
 import re
 
-def parse_itinerary_json_string(raw_output):
-    # Ambil bagian dalam tanda kutip dari "itinerary_data": "..."
-    match = re.search(r'"itinerary_data":\s*"(.+?)"\s*[,}]', raw_output, re.DOTALL)
-    if not match:
-        raise ValueError("Data itinerary tidak ditemukan.")
-    
-    # Ambil isi string JSON
-    raw_string = match.group(1)
-
-    # Hapus pembungkus markdown dan unescape
-    cleaned_string = raw_string.replace('```json', '').replace('```', '')
-    cleaned_string = cleaned_string.encode('utf-8').decode('unicode_escape')  # unescape \n, \"
-
-    # Parse JSON
-    parsed_json = json.loads(cleaned_string)
-    return parsed_json
-
-
 # Define tasks with functions instead of direct agent references
 def get_plan_route_task():
     return Task(
@@ -329,7 +311,7 @@ def get_parse_itinerary_task():
         ),
         expected_output="A simple JSON array containing city and date information",
         agent=get_itinerary_parser(),
-        output_key="parsed_itinerary",
+        output_key="itinerary_data",
     )
 
 @app.route("/", methods=["GET"])
@@ -422,21 +404,19 @@ def generate_itinerary():
             location=LOCATION
         )
 
-        parsed_itinerary = parse_crew.kickoff(inputs={
+        itinerary_data = parse_crew.kickoff(inputs={
             "route": route_res,
             "itinerary_md": itinerary_md,
             "attractions": attractions
         }).raw
 
-        parsed_to_json = parse_itinerary_json_string(parsed_itinerary)
 
         return jsonify({
             "route": route_res,
             "attractions": attractions,
             "transport": transport,
             "itinerary_markdown": itinerary_md,
-            "itinerary_data": parsed_to_json,
-            "pre_parsed": parsed_itinerary
+            "pre_parsed": itinerary_data
             
         })
     except Exception as e:
