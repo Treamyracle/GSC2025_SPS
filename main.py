@@ -291,7 +291,6 @@ def get_parse_itinerary_task():
     return Task(
         description=(
             "Given the following data:\n"
-            "- Route: {route}\n"
             "- Itinerary Markdown: {itinerary_md}\n\n"
             "Extract and structure the following information:\n"
             "1. For each city in the itinerary:\n"
@@ -314,7 +313,7 @@ def get_parse_itinerary_task():
             "  {\"city\": \"Bangkok\", \"checkin\": \"07/01\", \"checkout\": \"07/03\"},\n"
             "  {\"city\": \"Chiang Mai\", \"checkin\": \"07/03\", \"checkout\": \"07/06\"},\n"
             "  {\"city\": \"Luang Prabang\", \"checkin\": \"07/06\", \"checkout\": \"07/08\"}\n"
-            "]"
+            "]\n\n"
             "5.**OUTPUT FORMAT**: ONLY return a JSON array. No commentary, no markdown, no extra keys."
         ),
         expected_output="A JSON array containing city and date information with MM/DD date format",
