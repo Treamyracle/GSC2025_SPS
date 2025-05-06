@@ -417,14 +417,16 @@ def generate_itinerary():
             "route": route_res,
             "itinerary_md": itinerary_md,
             "attractions": attractions
-        }).raw
+        })
+        
+        print(itinerary_data)
         
         return jsonify({
             "route": route_res,
             "attractions": attractions,
             "transport": transport,
             "itinerary_markdown": itinerary_md,
-            "pre_parsed": itinerary_data
+            "pre_parsed": itinerary_data.raw
         })
     
     except Exception as e:
