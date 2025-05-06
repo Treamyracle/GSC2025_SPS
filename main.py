@@ -104,11 +104,19 @@ def create_gemini_llm():
     except Exception as e:
         print(f"Error refreshing credentials in create_gemini_llm: {e}")
     
+    # return ChatVertexAI(
+    #     model_name="gemini-2.0-flash",
+    #     project=PROJECT_ID,
+    #     location=LOCATION
+    # )
     return ChatVertexAI(
-        model_name="gemini-2.0-flash",
-        project=PROJECT_ID,
-        location=LOCATION
+    model_name="gemini-2.0-flash",
+    project=PROJECT_ID,
+    location=LOCATION,
+    temperature=0.0,
+    top_p=1.0,
     )
+
 
 # Instantiate Gemini LLM via LangChain/Vertex AI
 gemini_flash = create_gemini_llm()
@@ -219,9 +227,6 @@ def get_itinerary_parser():
         verbose=False,
         llm=create_gemini_llm(),
     )
-
-import json
-import re
 
 # Define tasks with functions instead of direct agent references
 def get_plan_route_task():
@@ -426,7 +431,7 @@ def generate_itinerary():
             "attractions": attractions,
             "transport": transport,
             "itinerary_markdown": itinerary_md,
-            "pre_parsed": itinerary_data.raw
+            "pre_parsed": itinerary_data
         })
     
     except Exception as e:

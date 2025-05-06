@@ -1,5 +1,5 @@
 # Use official slim Python image
-FROM python:3.10-slim
+FROM python:3.10-slim as runner
 
 # Set working directory
 WORKDIR /app
@@ -8,6 +8,7 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+FROM runner
 # Copy source code
 COPY . .
 
