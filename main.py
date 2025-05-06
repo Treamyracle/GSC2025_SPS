@@ -104,19 +104,11 @@ def create_gemini_llm():
     except Exception as e:
         print(f"Error refreshing credentials in create_gemini_llm: {e}")
     
-    # return ChatVertexAI(
-    #     model_name="gemini-2.0-flash",
-    #     project=PROJECT_ID,
-    #     location=LOCATION
-    # )
     return ChatVertexAI(
-    model_name="gemini-2.0-flash",
-    project=PROJECT_ID,
-    location=LOCATION,
-    temperature=0.0,
-    top_p=1.0,
+        model_name="gemini-2.0-flash",
+        project=PROJECT_ID,
+        location=LOCATION
     )
-
 
 # Instantiate Gemini LLM via LangChain/Vertex AI
 gemini_flash = create_gemini_llm()
@@ -241,6 +233,7 @@ def get_plan_route_task():
             "2. Order them in a single-direction route "
             "(e.g. Geneva → Lausanne → Bern → Interlaken → Lucerne → Zurich).\n"
             "3. If multiple countries, decide border crossings (bus/train/flight) and nearest airports."
+            "**OUTPUT FORMAT**: ONLY return a JSON array. No commentary, no markdown, no extra keys."
         ),
         expected_output="An ordered list of stops per country, plus any inter-country legs.",
         agent=get_route_planner(),
@@ -322,6 +315,7 @@ def get_parse_itinerary_task():
             "  {\"city\": \"Chiang Mai\", \"checkin\": \"07/03\", \"checkout\": \"07/06\"},\n"
             "  {\"city\": \"Luang Prabang\", \"checkin\": \"07/06\", \"checkout\": \"07/08\"}\n"
             "]"
+            "5.**OUTPUT FORMAT**: ONLY return a JSON array. No commentary, no markdown, no extra keys."
         ),
         expected_output="A JSON array containing city and date information with MM/DD date format",
         agent=get_itinerary_parser(),
@@ -422,14 +416,9 @@ def generate_itinerary():
             "route": route_res,
             "itinerary_md": itinerary_md,
             "attractions": attractions
-        })
-        
-        print(itinerary_data)
+        }).raw
         
         return jsonify({
-            "route": route_res,
-            "attractions": attractions,
-            "transport": transport,
             "itinerary_markdown": itinerary_md,
             "pre_parsed": itinerary_data
         })
