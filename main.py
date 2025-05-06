@@ -220,6 +220,27 @@ def get_itinerary_parser():
         llm=create_gemini_llm(),
     )
 
+import json
+import re
+
+def parse_itinerary_json_string(raw_output):
+    # Ambil bagian dalam tanda kutip dari "itinerary_data": "..."
+    match = re.search(r'"itinerary_data":\s*"(.+?)"\s*[,}]', raw_output, re.DOTALL)
+    if not match:
+        raise ValueError("Data itinerary tidak ditemukan.")
+    
+    # Ambil isi string JSON
+    raw_string = match.group(1)
+
+    # Hapus pembungkus markdown dan unescape
+    cleaned_string = raw_string.replace('```json', '').replace('```', '')
+    cleaned_string = cleaned_string.encode('utf-8').decode('unicode_escape')  # unescape \n, \"
+
+    # Parse JSON
+    parsed_json = json.loads(cleaned_string)
+    return parsed_json
+
+
 # Define tasks with functions instead of direct agent references
 def get_plan_route_task():
     return Task(
@@ -400,18 +421,22 @@ def generate_itinerary():
             project_id=current_project_id,
             location=LOCATION
         )
+
         parsed_itinerary = parse_crew.kickoff(inputs={
             "route": route_res,
             "itinerary_md": itinerary_md,
             "attractions": attractions
         }).raw
 
+        parsed_to_json = parse_itinerary_json_string(parsed_itinerary)
+
         return jsonify({
             "route": route_res,
             "attractions": attractions,
             "transport": transport,
             "itinerary_markdown": itinerary_md,
-            "itinerary_data": parsed_itinerary
+            "itinerary_data": parsed_to_json,
+            
         })
     except Exception as e:
         print(f"Error occurred: {str(e)}")
