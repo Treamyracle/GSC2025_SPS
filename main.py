@@ -450,12 +450,16 @@ def generate_itinerary():
 
         testing = parse_json_string(itinerary_data)
         
+        # return jsonify({
+        #     "route": route_res,
+        #     "attractions": attractions,
+        #     "transport": transport,
+        #     "itinerary_markdown": itinerary_md,
+        #     "pre_parsed": testing
+        # })
+        
         return jsonify({
-            "route": route_res,
-            "attractions": attractions,
-            "transport": transport,
-            "itinerary_markdown": itinerary_md,
-            "pre_parsed": testing
+            itinerary_data
         })
     
     except Exception as e:
