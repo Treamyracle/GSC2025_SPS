@@ -214,6 +214,8 @@ def get_itinerary_parser():
             "You are an expert at parsing travel itineraries and extracting structured data. "
             "You can identify cities, dates, and activities from various formats and present them "
             "in a clean, organized JSON structure."
+            "**OUTPUT FORMAT**: ONLY return a JSON array. No commentary, no markdown, no extra keys."
+
         ),
         allow_delegation=False,
         verbose=False,
