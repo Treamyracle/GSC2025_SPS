@@ -135,7 +135,7 @@ def get_destination_researcher():
             "Provide details and how long it takes to visit each."
         ),
         allow_delegation=False,
-        verbose=True,
+        verbose=False,
         llm=create_gemini_llm(),
     )
 
@@ -153,7 +153,7 @@ def get_input_agent():
             "Collect and validate this into a structured data format."
         ),
         allow_delegation=False,
-        verbose=True,
+        verbose=False,
         llm=create_gemini_llm(),
     )
 
@@ -168,7 +168,7 @@ def get_route_planner():
             "- Suggest nearest airports for inter-country flights or buses."
         ),
         allow_delegation=False,
-        verbose=True,
+        verbose=False,
         llm=create_gemini_llm(),
     )
 
@@ -184,7 +184,7 @@ def get_transport_agent():
             "- Otherwise, propose approximate departure/arrival times."
         ),
         allow_delegation=False,
-        verbose=True,
+        verbose=False,
         llm=create_gemini_llm(),
     )
 
@@ -202,7 +202,7 @@ def get_itinerary_writer():
             "- Highlight travel days separately when crossing countries."
         ),
         allow_delegation=False,
-        verbose=True,
+        verbose=False,
         llm=create_gemini_llm(),
     )
 
@@ -216,7 +216,7 @@ def get_itinerary_parser():
             "in a clean, organized JSON structure."
         ),
         allow_delegation=False,
-        verbose=True,
+        verbose=False,
         llm=create_gemini_llm(),
     )
 
