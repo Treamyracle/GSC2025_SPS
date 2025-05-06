@@ -289,6 +289,35 @@ def get_write_itinerary_task():
         output_key="itinerary_md",
     )
 
+import json
+
+def parse_json_string(json_string: str):
+    """
+    Mengubah string JSON menjadi dict atau list Python.
+    Menghapus fence seperti ```json jika ada.
+
+    Args:
+        json_string (str): String JSON dari output AI agent.
+
+    Returns:
+        dict atau list: Data hasil parsing JSON.
+
+    Raises:
+        ValueError: Jika string tidak bisa diparsing sebagai JSON.
+    """
+    try:
+        # Coba langsung parse
+        return json.loads(json_string)
+    except json.JSONDecodeError:
+        # Jika gagal, bersihkan dari fence markdown dan decode unicode
+        cleaned = json_string.replace('```json', '').replace('```', '').strip()
+        try:
+            cleaned = cleaned.encode('utf-8').decode('unicode_escape')
+            return json.loads(cleaned)
+        except Exception as e:
+            raise ValueError(f"Gagal mem-parsing JSON: {e}")
+
+
 def get_parse_itinerary_task():
     return Task(
         description=(
@@ -419,15 +448,16 @@ def generate_itinerary():
             "attractions": attractions
         }).raw
 
-
+        testing = parse_json_string(itinerary_data)
+        
         return jsonify({
             "route": route_res,
             "attractions": attractions,
             "transport": transport,
             "itinerary_markdown": itinerary_md,
-            "pre_parsed": itinerary_data
-            
+            "pre_parsed": testing
         })
+    
     except Exception as e:
         print(f"Error occurred: {str(e)}")
         return jsonify({
