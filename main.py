@@ -335,7 +335,7 @@ def get_write_itinerary_task():
         ),
         expected_output="An array of city objects with checkin/checkout dates and nested destination details",
         agent=get_itinerary_writer(),
-        output_key="itinerary_json",
+        output_key="itinerary_md",
     )
 
 def get_parse_itinerary_task():
