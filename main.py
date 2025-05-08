@@ -191,20 +191,26 @@ def get_transport_agent():
 def get_itinerary_writer():
     return Agent(
         role="Itinerary Writer",
-        goal="Compose a day-by-day itinerary in Markdown",
+        goal=(
+            "Produce a structured JSON itinerary array, where each element represents a city with:\n"
+            "  - \"city\": city name\n"
+            "  - \"checkin\": check-in date in MM/DD/YYYY\n"
+            "  - \"checkout\": check-out date in MM/DD/YYYY\n"
+            "  - \"destinations\": an array of activities, each with:\n"
+            "      • \"place\": name of the attraction or activity\n"
+            "      • \"date\": date of the activity in MM/DD/YYYY\n"
+            "      • \"time\": time range as HH:MM-HH:MM\n"
+            "Also include the day number and its date in parentheses, e.g. Day 1 (07/01/2025)."
+        ),
         backstory=(
-            "Using the route and transport plans:\n"
-            "- Break into Day 1, Day 2, … up to total trip days\n"
-            "- For each day, list activities in order with:\n"
-            "    • Start/end times\n"
-            "    • Location names\n"
-            "    • Transport mode & duration between stops\n"
-            "- Highlight travel days separately when crossing countries."
+            "You are an expert itinerary generator. Given route, transport, and attractions, "
+            "output **only** the JSON array as specified—no markdown, no explanations."
         ),
         allow_delegation=False,
         verbose=False,
         llm=create_gemini_llm(),
     )
+
 
 def get_itinerary_parser():
     return Agent(
@@ -273,6 +279,22 @@ def get_plan_transport_task():
         output_key="transport_segments",
     )
 
+# def get_write_itinerary_task():
+#     return Task(
+#         description=(
+#             "Using the following data:\n"
+#             "- Route: {route}\n"
+#             "- Transport: {transport_segments}\n"
+#             "- Attractions: {attractions}\n\n"
+#             "Produce a day-by-day Markdown itinerary:\n"
+#             "• For each city: list attractions with their visit times.\n"
+#             "• For each travel leg: show departure/arrival times & mode."
+#         ),
+#         expected_output="A full Markdown itinerary incorporating attractions and travel details.",
+#         agent=get_itinerary_writer(),
+#         output_key="itinerary_md",
+#     )
+    
 def get_write_itinerary_task():
     return Task(
         description=(
@@ -280,13 +302,40 @@ def get_write_itinerary_task():
             "- Route: {route}\n"
             "- Transport: {transport_segments}\n"
             "- Attractions: {attractions}\n\n"
-            "Produce a day-by-day Markdown itinerary:\n"
-            "• For each city: list attractions with their visit times.\n"
-            "• For each travel leg: show departure/arrival times & mode."
+            "Produce a structured JSON itinerary with this schema:\n"
+            "[\n"
+            "  {\n"
+            "    \"city\": \"City Name\",\n"
+            "    \"checkin\": \"MM/DD/YYYY\",\n"
+            "    \"checkout\": \"MM/DD/YYYY\",\n"
+            "    \"destinations\": [\n"
+            "      {\n"
+            "        \"place\": \"Attraction or activity\",\n"
+            "        \"date\": \"MM/DD/YYYY\",\n"
+            "        \"time\": \"HH:MM-HH:MM\"\n"
+            "      },\n"
+            "      ...\n"
+            "    ]\n"
+            "  },\n"
+            "  ...\n"
+            "]\n\n"
+            "Also include day numbers in parentheses after each day, e.g.:\n"
+            "  Day 1 (07/01/2025), Day 2 (07/02/2025), etc.\n\n"
+            "Example single item:\n"
+            "{\n"
+            "  \"city\": \"Rome\",\n"
+            "  \"checkin\": \"07/01/2025\",\n"
+            "  \"checkout\": \"07/04/2025\",\n"
+            "  \"destinations\": [\n"
+            "    {\"place\": \"Colosseum\", \"date\": \"07/01/2025\", \"time\": \"09:00-12:00\"},\n"
+            "    {\"place\": \"Pantheon\", \"date\": \"07/01/2025\", \"time\": \"13:00-14:00\"},\n"
+            "    ...\n"
+            "  ]\n"
+            "}"
         ),
-        expected_output="A full Markdown itinerary incorporating attractions and travel details.",
+        expected_output="An array of city objects with checkin/checkout dates and nested destination details",
         agent=get_itinerary_writer(),
-        output_key="itinerary_md",
+        output_key="itinerary_json",
     )
 
 def get_parse_itinerary_task():
